@@ -1,7 +1,7 @@
 const signalingUrl = 'wss://ayame-lite.shiguredo.jp/signaling';
-let roomId = 'z300cftYKKFc';
+let roomId = 'ayame-sdk-test';
 let clientId = null;
-let videoCodec = "VP9";
+let videoCodec = null;
 let audioCodec = null;
 let signalingKey = null;
 
@@ -36,3 +36,4 @@ roomIdInput.addEventListener('change', (event) => {
   console.log(event);
   roomId = event.target.value;
 });
+

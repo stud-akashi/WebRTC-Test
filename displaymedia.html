@@ -1,36 +1,30 @@
 <html lang="ja">
     <head>
         <meta charset="utf-8">
-        <title>Ayame RecvOnly Sample</title>
+        <title>Ayame getDisplayMedia() Sample</title>
         <link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-default.min.css">
     </head>
     <body>
       <header class="sticky row">
-        <h4>Ayame RecvOnly Sample</h4>
+        <h4>Ayame getDisplayMedia() Sample</h4>
       </header>
       <div>
         <p>ルームID
-        <input id="roomIdInput" type="text" value=""></input>
+          <input id="roomIdInput" type="text" value=""></input>
         </p>
         <p>クライアントID
-        <input id="clientIdInput" disabled type="text" value=""></input>
-        </p>
-        <p> 映像コーデック
-        <select id="video-codec" onChange="onChangeVideoCodec();">
-          <option value="none">none</option>
-          <option value="H264">H264</option>
-          <option value="VP8">VP8</option>
-          <option value="VP9">VP9</option>
-        </select>
-        （Google Chrome、Microsoft Edge でのみで動作します）
+          <input id="clientIdInput" disabled type="text" value=""></input>
         </p>
         <button onclick="startConn();">接続</button>
         <button onclick="disconnect();">切断</button>
       </div>
       <div style="float:left;">
-        <video id="remote-video" autoplay playsinline controls style="width: 400px; height: 300px; border: 1px solid black;"></video>
+        <video id="local-video" muted autoplay controls style="width: 400px; height: 300px; border: 1px solid black;"></video>
       </div>
-      <script src="https://cdn.jsdelivr.net/npm/@open-ayame/ayame-web-sdk@2020.2.1/dist/ayame.js"></script>
+      <div style="float:right;">
+        <video id="remote-video" autoplay controls style="width: 400px; height: 300px; border: 1px solid black;"></video>
+      </div>
+      <script src="https://unpkg.com/@open-ayame/ayame-web-sdk@2020.2.1/dist/ayame.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/qs/6.7.0/qs.min.js"></script>
       <script src="./main.js"></script>
       <script type="text/javascript">
@@ -39,8 +33,8 @@
         if (signalingKey) {
           options.signalingKey = signalingKey;
         }
-        options.video.direction = 'recvonly';
-        options.audio.direction = 'recvonly';
+        options.audio.enabled = false;
+        const remoteVideo = document.querySelector('#remote-video');
         let conn;
         const disconnect = () => {
           if (conn) {
@@ -48,14 +42,15 @@
           }
         }
         const startConn = async () => {
-          options.video.codec = videoCodec;
           conn = Ayame.connection(signalingUrl, roomId, options, true);
-          await conn.connect(null);
-          conn.on('open', ({authzMetadata}) => console.log(authzMetadata));
+          const mediaStream = await navigator.mediaDevices.getDisplayMedia({video: true});
           conn.on('disconnect', (e) => console.log(e));
-          conn.on('addstream', (e) => {
-            document.querySelector('#remote-video').srcObject = e.stream;
+          conn.on('addstream', async (e) => {
+            console.log(e.stream);
+            remoteVideo.srcObject = e.stream;
           });
+          await conn.connect(mediaStream, null);
+          document.querySelector('#local-video').srcObject = mediaStream;
         };
         document.querySelector("#roomIdInput").value = roomId;
         document.querySelector("#clientIdInput").value = options.clientId;

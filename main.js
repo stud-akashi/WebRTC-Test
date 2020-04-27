@@ -1,10 +1,16 @@
 const signalingUrl = 'wss://ayame-lite.shiguredo.jp/signaling';
 let roomId = 'z300cftYKKFc';
 let clientId = null;
-let videoCodec = "H264";
+let videoCodec = "VP9";
 let audioCodec = null;
 let signalingKey = null;
 
+function onChangeVideoCodec() {
+  videoCodec = document.getElementById("video-codec").value;
+  if (videoCodec == 'none') {
+    videoCodec = null;
+  }
+}
 // query string から roomId, clientId を取得するヘルパー
 function parseQueryString() {
   const qs = window.Qs;
@@ -21,6 +27,7 @@ function parseQueryString() {
     }
   }
 }
+
 
 parseQueryString();
 

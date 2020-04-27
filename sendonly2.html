@@ -12,16 +12,14 @@
         <input id="clientIdInput" disabled type="text" value=""></input>
         </p>
         <p>
-          <button id="devices_button" onclick="getDeviceList()">getDevices</button>
-          <select id="camera_list" size="1" style="width:160pt;">
+          使用デバイス
+          <select id="camera_list">
            <option>(video)</option>
           </select>
-          <select id="mic_list" size="1" style="width:160pt;">
+          <select id="mic_list">
            <option>(audio)</option>
           </select>
-          <select id="speaker_list" size="1" style="width:160pt;">
-           <option>(speaker)</option>
-          </select>
+          <button id="devices_button" onclick="getDeviceList()">更新</button>
         </p>
         <button onclick="startConn();">接続</button>
         <button onclick="disconnect();">切断</button>
@@ -47,6 +45,8 @@
           }
         }
         const startConn = async () => {
+          var audioId = getSelectedAudio();
+          var vidId = getSelectedVideo();
           options.video.codec = videoCodec;
           conn = Ayame.connection(signalingUrl, roomId, options, true);
           const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -57,12 +57,14 @@ audio: {
   noiseSuppression: false,
   sampleRate: 48000,
   sampleSize: 16,
-  volume: 1
+  volume: 1,
+  deviceId: audioId
 },
 video: {
   width: 1280,
   height: 720,
-  frameRate: 59.94
+  frameRate: 59.94,
+  deviceId: vidId
 }
  });
           conn.on('disconnect', (e) => console.log(e));
@@ -71,77 +73,13 @@ video: {
         };
         document.querySelector("#roomIdInput").value = roomId;
         document.querySelector("#clientIdInput").value = options.clientId;
+      </script>
 
 
-       //navigator.getUserMedia  = navigator.getUserMedia    || navigator.webkitGetUserMedia ||
-       //                          navigator.mozGetUserMedia || navigator.msGetUserMedia;
-       //window.RTCPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
-       //window.RTCIceCandidate = window.RTCIceCandidate || window.mozRTCIceCandidate || window.RTCIceCandidate;
-
-       var localVideo = document.getElementById('local_video');
-       var videoContainer = document.getElementById('container');
+      <script type="text/javascript">
        var micList = document.getElementById("mic_list");
        var cameraList = document.getElementById("camera_list");
-       var speakerList = document.getElementById("speaker_list");
-
        var localStream = null;
-
-       function stopVideo() {
-        localVideo.pause();
-        if (localVideo.srcObject) {
-          localVideo.srcObject = null;
-        }
-        else {
-          localVideo.src = "";
-        }
-
-        if (localStream) {
-         stopStream(localStream);
-         localStream = null;
-        }
-       }
-
-       function stopStream(stream) {
-        if (!stream) {
-         console.warn('NO stream');
-         return;
-        }
-
-        var tracks = stream.getTracks();
-        if (! tracks) {
-         console.warn('NO tracks');
-         return;
-        }
-
-        for (index in tracks) {
-         tracks[index].stop();
-        }
-       }
-
-       function logStream(msg, stream) {
-        console.log(msg + ': id=' + stream.id);
-
-        var videoTracks = stream.getVideoTracks();
-        if (videoTracks) {
-         console.log('videoTracks.length=' + videoTracks.length);
-         for (var i = 0; i < videoTracks.length; i++) {
-          var track = videoTracks[i];
-          console.log(' track.id=' + track.id);
-         }
-        }
-
-        var audioTracks = stream.getAudioTracks();
-        if (audioTracks) {
-         console.log('audioTracks.length=' + audioTracks.length);
-         for (var i = 0; i < audioTracks.length; i++) {
-          var track = audioTracks[i];
-          console.log(' track.id=' + track.id);
-         }
-        }
-       }
-
-
-      //--------------------
 
        function clearDeviceList() {
         while(micList.lastChild) {
@@ -149,9 +87,6 @@ video: {
         }
         while(cameraList.lastChild) {
          cameraList.removeChild(cameraList.lastChild);
-        }
-        while(speakerList.lastChild) {
-         speakerList.removeChild(speakerList.lastChild);
         }
        }
 
@@ -180,7 +115,7 @@ video: {
          var option = document.createElement('option');
          option.setAttribute('value', id);
          option.innerHTML = label + '(' + id + ')';
-         speakerList.appendChild(option);
+         // speakerList.appendChild(option);
         }
         else {
          console.error('UNKNOWN Device kind:' + device.kind);
@@ -212,66 +147,9 @@ video: {
         return id;
        }
 
-       function getSelectedSpeaker() {
-        var id = speakerList.options[speakerList.selectedIndex].value;
-        return id;
-       }
-
-       function setSpeaker() {
-        var speakerId = getSelectedSpeaker();
-        localVideo.volume = 0;
-        localVideo.setSinkId(speakerId)
-        .then(function() {
-         console.log('setSinkID Success');
-        })
-        .catch(function(err) {
-         console.error('setSinkId Err:', err);
-        });
-       }
-
-       function startFakeVideo() {
-        var constraints = {video: true, fake: true, audio: false};
-        navigator.mediaDevices.getUserMedia(
-         constraints
-        ).then(function(stream) {
-         localStream = stream;
-         logStream('selectedVideo', stream);
-         localVideo.srcObject = stream;
-        }).catch(function(err){
-         console.error('getUserMedia Err:', err);
-        });
-       }
-
-       function startSelectedVideoAudio() {
-        var audioId = getSelectedAudio();
-        var deviceId = getSelectedVideo();
-        console.log('selected video device id=' + deviceId + ' ,  audio=' + audioId);
-        var constraints = {
-          audio: {
-           deviceId: audioId
-          },
-          video: {
-           deviceId: deviceId
-          }
-        };
-        console.log('mediaDevice.getMedia() constraints:', constraints);
-
-        navigator.mediaDevices.getUserMedia(
-         constraints
-        ).then(function(stream) {
-         localStream = stream;
-         logStream('selectedVideo', stream);
-         localVideo.srcObject = stream;
-        }).catch(function(err){
-         console.error('getUserMedia Err:', err);
-        });
-       }
-
-       navigator.mediaDevices.ondevicechange = function (evt) {
-        console.log('mediaDevices.ondevicechange() evt:', evt);
-       };
-
-
+       window.onload = function(){
+         getDeviceList();
+      }
       </script>
   </body>
 </html>

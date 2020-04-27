@@ -1,5 +1,5 @@
 const signalingUrl = 'wss://ayame-lite.shiguredo.jp/signaling';
-let roomId = 'oPduKmJL2k3K';
+let roomId = 'z300cftYKKFc';
 let clientId = null;
 let videoCodec = "H264";
 let audioCodec = null;
